@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BURP_VERSION="latest"
+BURP_VERSION="2025.1.4"
 INSTALL_DIR="$HOME/burpsuite"
 BURP_JAR_URL="https://portswigger.net/burp/releases/download?product=community&version=$BURP_VERSION&type=Jar"
 BURP_JAR_PATH="$INSTALL_DIR/burpsuite.jar"
@@ -21,14 +21,20 @@ if ! command -v java &> /dev/null; then
 fi
 
 
-# Then install the burpsuite
+# Downloading and installing Burp Suite..
 
 mkdir -p "$INSTALL_DIR"
 
 echo "Downloading Burp Suite..."
 curl -L "$BURP_JAR_URL" -o "$BURP_JAR_PATH"
 
+if [ ! -f "$BURP_JAR_PATH"]; then
+	echo "Download failed. Please check the URL or your internet connection."
+	exit 1
+fi
+
 chmod +x "$BURP_JAR_PATH"
 
-echo "Burp Suite installed in $INSTALL_DIR. Run 'burpsuite' to start it."
+echo "Burp Suite installed in $INSTALL_DIR."
+echo "To run it, use: java -jar $BURP_JAR_PATH"
 
