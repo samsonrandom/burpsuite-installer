@@ -1,11 +1,12 @@
 #!/bin/bash
-
 # Install Burp Suite Community Edition (Linux)
+
 BURP_VERSION="2025.1.5"
 BURP_URL="https://portswigger-cdn.net/burp/releases/download?product=community&version=${BURP_VERSION}&type=Linux"
 OUTPUT_FILE="burpsuite_community_linux_v${BURP_VERSION}.sh"
 
 echo "Downloading Burp Suite Community Edition v${BURP_VERSION}..."
+
 if ! curl -L "$BURP_URL" -o "$OUTPUT_FILE"; then
     echo "❗ Failed to download Burp Suite. Please check your internet connection and try again."
     exit 1
@@ -15,6 +16,7 @@ fi
 chmod +x "$OUTPUT_FILE"
 
 echo "Running the Burp Suite installer..."
+
 if ! ./"$OUTPUT_FILE"; then
     echo "❗ Installation failed. Please check the installer output for more details."
     exit 1
@@ -28,11 +30,12 @@ ALIAS_NAME="burpsuite"
 mkdir -p "$INSTALL_DIR"
 
 # Try to locate installed Burp Suite executable
-BURP_EXEC=$(find "$HOME" -type f -name "BurpSuiteCommunity" -executable 2>/dev/null | head -n 1)
+BURP_EXEC="$HOME/BurpSuiteCommunity/BurpSuiteCommunity"
 
-if [[ -n "$BURP_EXEC" ]]; then
-    ln -sf "$BURP_EXEC" "$INSTALL_DIR/$ALIAS_NAME"
-
+if [[ -f "$BURP_EXEC" ]]; then
+    # Use the provided alias command
+    alias burpsuite="$BURP_EXEC"
+    
     # Ensure ~/.local/bin is in PATH
     SHELL_RC="$HOME/.bashrc"
     [[ "$SHELL" == */zsh ]] && SHELL_RC="$HOME/.zshrc"
