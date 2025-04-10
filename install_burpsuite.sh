@@ -1,66 +1,49 @@
 #!/bin/bash
 
-BURP_VERSION="2023.1"
-INSTALL_DIR="$HOME/burpsuite"
-BURP_JAR_URL="https://portswigger.net/burp/releases/download?product=community&version=$BURP_VERSION&type=Jar"
-BURP_JAR_PATH="$INSTALL_DIR/burpsuite.jar"
+# Install Burp Suite Community Edition (Linux)
+BURP_VERSION="2025.1.5"
+BURP_URL="https://portswigger-cdn.net/burp/releases/download?product=community&version=${BURP_VERSION}&type=Linux"
+OUTPUT_FILE="burpsuite_community_linux_v${BURP_VERSION}.sh"
 
-
-#Function to install Java 17
-install_java17(){
-	echo "Installing Java 17..."
-	sudo apt update && sudo apt install -y openjdk-17-jre
-
-	# Set Java 17 as the default version
-	echo "Setting Java 17 as the default..."
-	sudo update-alternatives --set java $(update-alternatives --list java | grep "java-17")
-}
-
-#Check of Java is install and its version
-if ! command -v java &> /dev/null; then
-    echo "Java is not installed. Installing Java 17..."
-    install_java17
-else
-    JAVA_VERSION=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
-    if [[ ! $JAVA_VERSION =~ ^17 ]]; then
-        echo "Detected Java version: $JAVA_VERSION"
-        echo "Burp Suite 2023.1 requires Java 17. Switching to Java 17..."
-        install_java17
-    else
-        echo "Java 17 is already set as default."
-    fi
+echo "Downloading Burp Suite Community Edition v${BURP_VERSION}..."
+if ! curl -L "$BURP_URL" -o "$OUTPUT_FILE"; then
+    echo "❗ Failed to download Burp Suite. Please check your internet connection and try again."
+    exit 1
 fi
 
+# Make installer executable
+chmod +x "$OUTPUT_FILE"
 
-# Verify Java installation
-if ! command -v java &> /dev/null; then
-	echo "Java installation failed. Please install Java manually and rerun the script."
-	echo "script: sudo apt update && sudo apt install -y openjdk-17-jre"
-	exit1
+echo "Running the Burp Suite installer..."
+if ! ./"$OUTPUT_FILE"; then
+    echo "❗ Installation failed. Please check the installer output for more details."
+    exit 1
 fi
 
+# Set up alias
+INSTALL_DIR="$HOME/.local/bin"
+ALIAS_NAME="burpsuite"
 
-# Downloading and installing Burp Suite..
-
+# Create .local/bin if it doesn't exist
 mkdir -p "$INSTALL_DIR"
 
-echo "Downloading Burp Suite..."
-curl -L "$BURP_JAR_URL" -o "$BURP_JAR_PATH"
+# Try to locate installed Burp Suite executable
+BURP_EXEC=$(find "$HOME" -type f -name "BurpSuiteCommunity" -executable 2>/dev/null | head -n 1)
 
-if [ ! -f "$BURP_JAR_PATH"]; then
-	echo "Download failed. Please check the URL or your internet connection."
-	exit 1
+if [[ -n "$BURP_EXEC" ]]; then
+    ln -sf "$BURP_EXEC" "$INSTALL_DIR/$ALIAS_NAME"
+
+    # Ensure ~/.local/bin is in PATH
+    SHELL_RC="$HOME/.bashrc"
+    [[ "$SHELL" == */zsh ]] && SHELL_RC="$HOME/.zshrc"
+
+    if ! grep -q 'export PATH="$HOME/.local/bin:$PATH"' "$SHELL_RC"; then
+        echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$SHELL_RC"
+    fi
+
+    echo "Alias 'burpsuite' added. Restart your terminal or run:"
+    echo "source $SHELL_RC"
+else
+    echo "❗ Burp executable not found. You may need to manually set up the alias."
+    exit 1
 fi
-
-# Set execute permissions
-chmod +x "$BURP_JAR_PATH"
-
-echo "Burp Suite installed in $INSTALL_DIR."
-
-# Create an alias for running Burp Suite
-echo "alias burpsuitejar='java -jar $BURP_JAR_PATH'" >> ~/.bashrc
-source ~/.bashrc
-
-
-echo "To run it, use: java -jar $BURP_JAR_PATH"
-echo "You may also use this alias to run it: burpsuitejar"
